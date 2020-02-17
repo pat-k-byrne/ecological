@@ -139,13 +139,21 @@ skr.df <- raw.data %>%
 # The population that gives you dN/Ndt = 0 is your K
 # We can find this by solving y = mx + b for the x such that y = 0, which works out to be x = -b/m
 
-# Fitting a linear model where population predicts dN/Ndt, dN/Ndt = m*population + b
+# Fitting a linear model where dN/Ndt = m*population + b
 lm.mx <- lm(dNNdt ~ population, data = mexico.df)
 lm.skr <- lm(dNNdt ~ population, data = skr.df)
 
 # x      =          -         b           /          m
 k.mx <- as.numeric((-lm.mx$coefficients[1]/lm.mx$coefficients[2]))
 k.skr <- as.numeric((-lm.skr$coefficients[1]/lm.skr$coefficients[2]))
+```
+
+```{r}
+# Now that we've got out results, lets plot them for each country!
+# Mexico first
+ggplot(data = mexico.df, aes(x = population, y = dNNdt, color = year, size = calories_pd)) + 
+  geom_point()
+
 ```
 
 
