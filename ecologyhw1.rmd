@@ -12,6 +12,7 @@ rm(list = ls())
 # Attach packages
 library(tidyverse)
 library(janitor)
+library(stargazer)
 ```
 
 ## Question 1
@@ -136,10 +137,26 @@ skr.df <- raw.data %>%
 
 # Then, fit a linear model where population predicts dN/Ndt
 # The population that gives you dN/Ndt = 0 is your K
-lm.mx <- lm(dNNdt ~ population, data = mexico.df)
-k.mx <- (-lm.mx$coefficients[1]/lm.mx$coefficients[2])
+# We can find this by solving y = mx + b for the x such that y = 0, which works out to be x = -b/m
 
+# Fitting a linear model where population predicts dN/Ndt, dN/Ndt = m*population + b
+lm.mx <- lm(dNNdt ~ population, data = mexico.df)
 lm.skr <- lm(dNNdt ~ population, data = skr.df)
-k.skr <- (-lm.skr$coefficients[1]/lm.skr$coefficients[2])
+
+# x      =          -         b           /          m
+k.mx <- as.numeric((-lm.mx$coefficients[1]/lm.mx$coefficients[2]))
+k.skr <- as.numeric((-lm.skr$coefficients[1]/lm.skr$coefficients[2]))
+```
+
+
+## Question 3
+
+### Part a)
+
+```{r}
+mlr.data <- raw.data %>% 
+  select(dNNdt, years_ed, calories_pd)
+
+mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = mlr.data)
 ```
 
