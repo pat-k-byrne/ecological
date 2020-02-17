@@ -106,6 +106,7 @@ ggplot(data = raw.data, aes(x = population, y = dNNdt, color = country)) +
 ### Part b)
 
 ```{r}
+# Isolate data for one Asian and one Latin American country
 asian.latin.df <- raw.data %>% 
   filter(
     country %in% c('Mexico', 'South Korea')
@@ -114,20 +115,27 @@ asian.latin.df <- raw.data %>%
     dNdt = dNNdt*population
   )
 
+# Lets check them out
 ggplot(data = asian.latin.df, aes(x = population, y = dNNdt, color = country)) +
   geom_point() +
   facet_wrap(~country, scales = 'free')
+```
 
+```{r}
+# Looks good to me
+# Let's figure out what carrying capacity is
+# First isolate data from each country
 mexico.df <- raw.data %>% 
   filter(
     country %in% c('Mexico')
   )
-
 skr.df <- raw.data %>% 
   filter(
     country %in% c('South Korea')
   )
 
+# Then, fit a linear model where population predicts dN/Ndt
+# The population that gives you dN/Ndt = 0 is your K
 lm.mx <- lm(dNNdt ~ population, data = mexico.df)
 k.mx <- (-lm.mx$coefficients[1]/lm.mx$coefficients[2])
 
