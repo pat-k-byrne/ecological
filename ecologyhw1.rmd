@@ -14,15 +14,31 @@ library(tidyverse)
 library(janitor)
 ```
 
+## Question 1
+
+### Part b)
 
 ```{r}
-raw.data <- read_csv('assig1_data.csv') %>% 
+# Read in the new corrected data (has all the countries), rename some stuff, rename the data frame
+new.data = read_csv('corrected_ass_1_data.csv') %>% 
+  rename(
+    year = Year,
+    dNNdt = `dN/Ndt  PerCap Pop Growth Rate (corrected)`,
+    country = `Country/Aggregate`,
+    population = Population,
+    calories_pd = `Food: Daily Per Capita KCal`,
+    GDP_pc = `PerCapita GDP`,
+    HIV_prev = `HIv Prevalence (% Ages 15-49) (WHO)`,
+    years_ed = `Mean Years of Education (Interpolated from Barro & Lee 2010)`
+  ) %>% 
   mutate(
     dNNdt = dNNdt*2.303
   )
+raw.data <- new.data
 ```
 
 ```{r}
+# Only data for the years 1963 and 1964
 data.63.64 <- raw.data %>% 
   filter(
     year %in% c(1963,1964)
@@ -30,19 +46,92 @@ data.63.64 <- raw.data %>%
 ```
 
 ```{r}
-pop.vector <- data.63.64$population # Argentina, Canada, China, India, Kenya
-nt.indx <- c(1,3,5,7,9)
-ntplus.indx <- c(2,4,6,8,10)
+# Calculating dN/Ndt by using the equalities r = dN/Ndt and r = ln(Nt+1/Nt)
+pop.vector <- data.63.64$population # Pairs are: Argentina, Canada, China, India, Kenya, Mexico, South Korea
+nt.indx <- c(1,3,5,7,9,11,13)
+ntplus.indx <- c(2,4,6,8,10,12,14)
 ratio.vector <- pop.vector[ntplus.indx]/pop.vector[nt.indx]
 r.vector <- log(ratio.vector)
 ```
 
 ```{r}
+# Make a data frame comparing the calculated dN/Ndt values to the given ones
 data.q2 <- data.63.64 %>% 
   filter(
     year %in% c(1963)
   )
 
 result.q2 <- tibble(cntry = data.q2$country, given = data.q2$dNNdt, calc = r.vector)
+```
+
+### part c)
+
+```{r}
+# Do this for all years of Kenya
+data.kenya <- raw.data %>% 
+  filter(
+    country %in% c('Kenya')
+  )
+
+k.pop.vector <- data.kenya$population 
+nt.indx <- seq(from = 1, to = 45, by = 1)
+ntplus.indx <- seq(from = 2, to = 46, by = 1)
+k.ratio.vector <- k.pop.vector[ntplus.indx]/k.pop.vector[nt.indx]
+k.r.vector <- log(k.ratio.vector)
+```
+
+```{r}
+# Graph the Kenya results
+given.k.vec <- data.kenya$dNNdt
+given.k.dnndt.vec <- given.k.vec[nt.indx]
+graph.df <- tibble(gvn = given.k.dnndt.vec,calc = k.r.vector)
+ggplot(data = graph.df, aes(x = gvn, y = calc))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1, lty = 2) +
+  scale_x_continuous(limits = c(0.025, 0.04)) +
+  scale_y_continuous(limits = c(0.025, 0.04))
+```
+
+## Question 2
+
+### Part a)
+
+```{r}
+# Facet wrapped by country dN/Ndt vs Nt 
+ggplot(data = raw.data, aes(x = population, y = dNNdt, color = country)) +
+  geom_point() +
+  facet_wrap(~country, scales = 'free')
+```
+
+### Part b)
+
+```{r}
+asian.latin.df <- raw.data %>% 
+  filter(
+    country %in% c('Mexico', 'South Korea')
+  ) %>% 
+  mutate(
+    dNdt = dNNdt*population
+  )
+
+ggplot(data = asian.latin.df, aes(x = population, y = dNNdt, color = country)) +
+  geom_point() +
+  facet_wrap(~country, scales = 'free')
+
+mexico.df <- raw.data %>% 
+  filter(
+    country %in% c('Mexico')
+  )
+
+skr.df <- raw.data %>% 
+  filter(
+    country %in% c('South Korea')
+  )
+
+lm.mx <- lm(dNNdt ~ population, data = mexico.df)
+k.mx <- (-lm.mx$coefficients[1]/lm.mx$coefficients[2])
+
+lm.skr <- lm(dNNdt ~ population, data = skr.df)
+k.skr <- (-lm.skr$coefficients[1]/lm.skr$coefficients[2])
 ```
 
