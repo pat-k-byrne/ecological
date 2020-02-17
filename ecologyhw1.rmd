@@ -1,0 +1,48 @@
+---
+title: "HW1"
+author: "Pat Byrne"
+date: "2/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Clear global environment
+rm(list = ls()) 
+
+# Attach packages
+library(tidyverse)
+library(janitor)
+```
+
+
+```{r}
+raw.data <- read_csv('assig1_data.csv') %>% 
+  mutate(
+    dNNdt = dNNdt*2.303
+  )
+```
+
+```{r}
+data.63.64 <- raw.data %>% 
+  filter(
+    year %in% c(1963,1964)
+  )
+```
+
+```{r}
+pop.vector <- data.63.64$population # Argentina, Canada, China, India, Kenya
+nt.indx <- c(1,3,5,7,9)
+ntplus.indx <- c(2,4,6,8,10)
+ratio.vector <- pop.vector[ntplus.indx]/pop.vector[nt.indx]
+r.vector <- log(ratio.vector)
+```
+
+```{r}
+data.q2 <- data.63.64 %>% 
+  filter(
+    year %in% c(1963)
+  )
+
+result.q2 <- tibble(cntry = data.q2$country, given = data.q2$dNNdt, calc = r.vector)
+```
+
