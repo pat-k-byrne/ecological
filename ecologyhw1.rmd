@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 # Clear global environment
 rm(list = ls()) 
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 # Attach packages
 library(tidyverse)
@@ -87,10 +88,13 @@ given.k.vec <- data.kenya$dNNdt
 given.k.dnndt.vec <- given.k.vec[nt.indx]
 graph.df <- tibble(gvn = given.k.dnndt.vec,calc = k.r.vector)
 ggplot(data = graph.df, aes(x = gvn, y = calc))+
-  geom_point()+
+  geom_point(cex = 3)+
   geom_abline(intercept = 0, slope = 1, lty = 2) +
   scale_x_continuous(limits = c(0.025, 0.04)) +
-  scale_y_continuous(limits = c(0.025, 0.04))
+  scale_y_continuous(limits = c(0.025, 0.04)) + 
+  labs(title = 'Kenya - dN/Ndt: Given vs. Calculated',
+       x = 'dN/Ndt Given',
+       y = 'dN/Ndt Calculated')
 ```
 
 ## Question 2
@@ -101,7 +105,11 @@ ggplot(data = graph.df, aes(x = gvn, y = calc))+
 # Facet wrapped by country dN/Ndt vs Nt 
 ggplot(data = raw.data, aes(x = population, y = dNNdt, color = country)) +
   geom_point() +
-  facet_wrap(~country, scales = 'free')
+  facet_wrap(~country, scales = 'free') + 
+  labs(x = 'Population',
+       y = 'dN/Ndt',
+       color = 'Country',
+       title = 'Population vs. dN/Ndt, Faceted by Country')
 ```
 
 ### Part b)
@@ -117,9 +125,9 @@ asian.latin.df <- raw.data %>%
   )
 
 # Lets check them out
-ggplot(data = asian.latin.df, aes(x = population, y = dNNdt, color = country)) +
-  geom_point() +
-  facet_wrap(~country, scales = 'free')
+# ggplot(data = asian.latin.df, aes(x = population, y = dNNdt, color = country)) +
+#   geom_point() +
+#   facet_wrap(~country, scales = 'free')
 ```
 
 ```{r}
@@ -152,8 +160,55 @@ k.skr <- as.numeric((-lm.skr$coefficients[1]/lm.skr$coefficients[2]))
 # Now that we've got out results, lets plot them for each country!
 # Mexico first
 ggplot(data = mexico.df, aes(x = population, y = dNNdt, color = year, size = calories_pd)) + 
-  geom_point()
+  geom_point() +
+  geom_abline(intercept = lm.mx$coefficients[1], slope = lm.mx$coefficients[2],
+              lty = 2,
+              color = 'red') + 
+  scale_y_continuous(limits = c(0,0.035)) + 
+  scale_x_continuous(limits = c(3*10^7, 15*10^7)) + 
+  annotate("pointrange", 
+           x = k.mx, 
+           y = 0, 
+           ymin = 0, 
+           ymax = 0.0045,
+           colour = "red", 
+           size = 0.75) +
+   annotate("text",
+           x = k.mx,
+           y = 0.007,
+           label = paste('Estimated K \n=', round( (k.mx/10^6),1 ), 'million'),
+           size = 4) + 
+  labs(x = 'Population',
+       y = 'dN/Ndt',
+       title = 'Mexico: Population vs. Per Capita Growth Rate',
+       size = 'Per Capita \nDaily Calories',
+       color = 'Year')
 
+# And South Korea
+ggplot(data = skr.df, aes(x = population, y = dNNdt, color = year, size = calories_pd)) + 
+  geom_point() +
+  geom_abline(intercept = lm.skr$coefficients[1], slope = lm.skr$coefficients[2],
+              lty = 2,
+              color = 'red') + 
+  scale_y_continuous(limits = c(0,0.03)) + 
+  scale_x_continuous(limits = c(2.5*10^7, 6*10^7)) + 
+  annotate("pointrange", 
+           x = k.skr, 
+           y = 0, 
+           ymin = 0, 
+           ymax = 0.0045,
+           colour = "red", 
+           size = 0.75) +
+   annotate("text",
+           x = k.skr,
+           y = 0.007,
+           label = paste('Estimated K \n=', round( (k.skr/10^6),1 ), 'million'),
+           size = 4) + 
+  labs(x = 'Population',
+       y = 'dN/Ndt',
+       title = 'South Korea: Population vs. Per Capita Growth Rate',
+       size = 'Per Capita \nDaily Calories',
+       color = 'Year')
 ```
 
 
@@ -162,9 +217,108 @@ ggplot(data = mexico.df, aes(x = population, y = dNNdt, color = year, size = cal
 ### Part a)
 
 ```{r}
+# Make a linear regression model for all the countries using years or education and the base-10 logarithm of per capita calories per day
 mlr.data <- raw.data %>% 
-  select(dNNdt, years_ed, calories_pd)
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+all.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = mlr.data)
+```
 
-mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = mlr.data)
+### Part b)
+
+```{r}
+# Make a linear regression model for each of the seven the countries using years or education and the base-10 logarithm of per capita calories per day
+
+# Argentina
+arg.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('Argentina')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+arg.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = arg.mlr.data)
+
+# Canada
+can.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('Canada')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+can.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = can.mlr.data)
+
+# China
+prc.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('China')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+prc.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = prc.mlr.data)
+
+# India
+ind.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('India')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+ind.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = ind.mlr.data)
+
+# Kenya
+ken.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('Kenya')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+ken.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = ken.mlr.data)
+
+# Mexico
+mex.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('Mexico')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+mex.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = mex.mlr.data)
+
+# South Korea
+skr.mlr.data <- raw.data %>% 
+  filter(
+    country %in% c('South Korea')
+  ) %>% 
+  select(dNNdt, years_ed, calories_pd) %>% 
+  mutate(
+    calories_pd = log10(calories_pd)
+  )
+skr.mlr.mdl <- lm(dNNdt ~ years_ed + calories_pd, data = skr.mlr.data)
+```
+
+```{r, results = 'asis'}
+# Now we slap all the coefficients for all the linear models into a stargazer table so we can bullshit about them
+stargazer(all.mlr.mdl, arg.mlr.mdl, can.mlr.mdl, prc.mlr.mdl, ind.mlr.mdl, ken.mlr.mdl, mex.mlr.mdl, skr.mlr.mdl,
+          type = "html",
+          column.labels = c('All Countries', 'Argentina', 'Canada', 'China', 'India', 'Kenya', 'Mexico', 'South Korea'),
+          model.numbers = F,
+          title = 'dN/Ndt Model Coefficients and Summary Statistics',
+          covariate.labels = c('Years of Education',
+                               'log10[Daily Calories]',
+                               'Constant'),
+          dep.var.labels = 'dN/Ndt')
 ```
 
